@@ -1,38 +1,18 @@
-from keras.models import Sequential
-from keras.layers import Dense, Dropout, Activation
-from keras.regularizers import l2
-from keras.optimizers import SGD ,Adagrad
-from scipy.io import loadmat, savemat
+from scipy.io import loadmat
 from keras.models import model_from_json
-import theano.tensor as T
-import theano
-import csv
-import configparser
-import collections
-import time
-import csv
 from math import factorial
-import os
-from os import listdir
-import skimage.transform
-from skimage import color
-from os.path import isfile, join
 import numpy as np
-import numpy
-from datetime import datetime
-from scipy.spatial.distance import cdist,pdist,squareform
-import theano.sandbox
-#import c3D_model
-#import Initialization_function
-#from moviepy.editor import VideoFileClip
-#from IPython.display import Image, display
+import numpy.matlib
 import matplotlib.pyplot as plt
 import cv2
-import os, sys
-import pickle
-from PyQt4 import QtGui   # If PyQt4 is not working in your case, you can try PyQt5, 
+import sys
+from PyQt5 import QtWidgets   # If PyQt4 is not working in your case, you can try PyQt5,
+import os
+os.environ['KERAS_BACKEND'] = 'theano'
+os.environ["THEANO_FLAGS"] = "mode=FAST_RUN,device=cuda0,dnn.enabled=False,floatX=float32"
+
 seed = 7
-numpy.random.seed(seed)
+numpy.matlib.random.seed(seed)
 
 def load_model(json_path):
     model = model_from_json(open(json_path).read())
@@ -99,8 +79,8 @@ def savitzky_golay(y, window_size, order, deriv=0, rate=1):
 
 def load_dataset_One_Video_Features(Test_Video_Path):
 
-    VideoPath =Test_Video_Path
-    f = open(VideoPath, "r")
+    VideoPath = Test_Video_Path
+    f = open(VideoPath, "rb")
     words = f.read().split()
     num_feat = len(words) / 4096
     # Number of features per video to be loaded. In our case num_feat=32, as we divide the video into 32 segments. Npte that
@@ -119,7 +99,7 @@ def load_dataset_One_Video_Features(Test_Video_Path):
 
     return  AllFeatures
 
-class PrettyWidget(QtGui.QWidget):
+class PrettyWidget(QtWidgets.QWidget):
 
     def __init__(self):
         super(PrettyWidget, self).__init__()
@@ -128,11 +108,11 @@ class PrettyWidget(QtGui.QWidget):
     def initUI(self):
         self.setGeometry(500, 100, 500, 500)
         self.setWindowTitle('Anomaly Detection')
-        btn = QtGui.QPushButton('ANOMALY DETECTION SYSTEM \n Please select video', self)
+        btn = QtWidgets.QPushButton('ANOMALY DETECTION SYSTEM \n Please select video', self)
 
         Model_dir = '/home/cvlab/Waqas_Data/Anomaly_Data/Pre_TrainedModels/L1L2/'
-        weights_path = Model_dir + 'weights_L1L2.mat'
-        model_path = Model_dir + 'model.json'
+        weights_path = 'weights_L1L2.mat'
+        model_path = 'model.json'
         ########################################
         ######    LOAD ABNORMALITY MODEL   ######
         global model
@@ -155,18 +135,20 @@ class PrettyWidget(QtGui.QWidget):
 
 
     def SingleBrowse(self):
-        video_path = QtGui.QFileDialog.getOpenFileName(self,
+        video_path, _filter = QtWidgets.QFileDialog.getOpenFileName(self,
                                                         'Single File',
                                                         "/home/cvlab/Waqas_Data/Anomaly_Data/Normal_test_abn")
 
+        print("Video path: ")
         print(video_path)
+        print("-----")
         cap = cv2.VideoCapture(video_path)
         #Total_frames = cap.get(cv2.CV_CAP_PROP_FRAME_COUNT)
         print(cv2)
         Total_frames = cap.get(cv2.CAP_PROP_FRAME_COUNT)
         total_segments = np.linspace(1, Total_frames, num=33)
         total_segments = total_segments.round()
-        FeaturePath=(video_path)
+        FeaturePath = (video_path)
         FeaturePath = FeaturePath[0:-4]
         FeaturePath = FeaturePath+ '.txt'
         inputs = load_dataset_One_Video_Features(FeaturePath)
@@ -195,7 +177,7 @@ class PrettyWidget(QtGui.QWidget):
         Total_frames = cap.get(cv2.CAP_PROP_FRAME_COUNT)
 
         print ("Anomaly Prediction")
-        x = np.linspace(1, Total_frames, Total_frames)
+        x = np.linspace(1, Total_frames, int(Total_frames))
         scores = Frames_Score
         scores1=scores.reshape((scores.shape[1],))
         scores1 = savitzky_golay(scores1, 101, 3)
@@ -233,7 +215,7 @@ class PrettyWidget(QtGui.QWidget):
 
 
 def main():
-    app = QtGui.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     w = PrettyWidget()
     app.exec_()
 
